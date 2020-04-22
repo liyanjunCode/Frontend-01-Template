@@ -1,24 +1,35 @@
-// let arr = [0.1, -0.1, +0.1, -.1, +.1, 1, +1, -1, 1.0, -1.0, +1.0, 1.02, -1.02, +1.02 ]
-// let reg = /[+|-]?([0-9]*)\.?([0-9]*)/
-// let arr1 = arr.map((item, i) => {
-    
-//     console.log(item.toString().match(reg), i)
-//     console.log(RegExp.$1, RegExp.$2, RegExp.$3, `a${i}b`)
-//     return [RegExp.$1, RegExp.$2]
-// })
-// utf8编码
-function UTF8Encode(str) {
-    let encodeStr = '';
-    for(let item of str) {
-        0000 0080
-        0080 0800
-        
-        // item.codePointAt(0).toString(16).padStart(4, '0')
-        const binary = item.codePointAt(0).toString(2);
-        const byteNum = Math.ceil(binary.length / 4);
-            console.log(binary.length / 4, 111)
-        // encodeStr += `\\u}`
-    }
-    return encodeStr
-}
-    console.log(UTF8Encode('严'))
+
+
+
+    // 匹配数字字面量
+    let reg =/[+|-]?([0-9]*)\.?([0-9]*)/
+
+
+    // utf8编码
+    // function UTF8Encode(str) {
+    //     let encodeStr = '';
+    //     for(let item of str) {
+    //         const point = item.codePointAt(0)
+    //         let hexadecimal = '\\u' + point.toString(16).padStart(4, '0');
+    //         const binary = item.codePointAt(0).toString(2);
+    //         const len = binary.length
+    //         if(hexadecimal >= '\u0000' && hexadecimal <= '\u007F') {
+    //             console.log(1111, hexadecimal)
+    //             encodeStr += binary.padStart(8, '0')  
+    //         } else if (hexadecimal >= '\u0080' && hexadecimal <= '\u07FF') {
+    //             console.log(22222)
+    //             encodeStr += 110 + binary.substr(0, len).padStart(5, '0') + 10 + binary.substr(len - 1).padStart(6, '0');
+    //         } else if (hexadecimal >= '\u0800' && hexadecimal <= '\uFFFF') {
+    //             console.log(3333)
+    //             encodeStr += 1110 + binary.substr(0, len).padStart(4, '0') + 10 + 
+    //                         binary.substr(len - 11).padStart(6, '0') + 10 + binary.substr(len - 5).padStart(6, '0')
+    //         } else {
+    //             console.log(hexadecimal, 444)
+    //             encodeStr += 11110 + binary.substr(0, len).padStart(3, '0') + 10 + 
+    //                     binary.substr(len - 17).padStart(6, '0') + 10 + binary.substr(len - 5).padStart(6, '0') + 
+    //                     binary.substr(len - 5).padStart(6, '0')
+    //         }
+    //     }
+    //     return encodeStr
+    // }
+    // console.log(UTF8Encode('严'))
