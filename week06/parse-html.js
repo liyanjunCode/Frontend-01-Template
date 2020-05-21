@@ -1,21 +1,133 @@
-
+const css = require('css')
 const EOF = Symbol('EOF')
-let curentToken = null
+let curentToken = {}
 let currentAttribute = null
 let currentTextNode = null
 let stack = [{type: 'document', children: []}]
+let rules = []
+function addCSSRules(text){
+    const ast = css.parse(text)
+    rules.push(...ast.stylesheet.rules)
+}
+function match(element, selector){
+    // 元素没有属性或没有选择器， 没有对比的价值， 就判定为不是当前元素的style规则
+    if(!selector || !element.attributes) {
+        return false
+    }
+    // id选择器处理
+    if(selector.charAt(0) == '#') {
+        const attr = element.attributes.filter(attr => attr.name == 'id')[0]
+        if(attr && attr.value == selector.replace('#', '')) {
+            return true
+        }
+    } else if(selector.charAt(0) == '.') { //class 选择器处理
+        const attr = element.attributes.filter(attr => attr.name == 'class')[0]
+        if(attr && attr.value == selector.replace('.', '')) {
+            return true
+        }
+    } else { //标签选择器处理
+        if(element.tagName == selector) {
+            return true
+        }
+    }
+}
+function specificity(selectors){
+    const p = [0, 0, 0, 0]
+    const selectorParts = selectors.split(' ')
+    for(let part in selectorParts) {
+        if(part.charAt(0) == '#') {
+            p[1] += 1
+        } else if(part.charAt(0) == '.'){
+            p[2] += 1
+        } else {
+            p[3] += 1
+        }
+    }
+    return p
+}
+function compare(sp1, sp2) {
+    if(sp1[0] -sp2[0]) {
+        return sp1[0] -sp2[0]
+    }
+    // 如果id选择器数值不相等，就可以计算出哪个权重大
+    if(sp1[1] -sp2[1]) {
+        return sp1[1] -sp2[1]
+    }
+    // 如果class选择器数值不相等，就可以计算出哪个权重大
+    if(sp1[2] -sp2[2]) {
+        return sp1[2] -sp2[2]
+    }
+     // 最后比较tag
+    return sp1[3] -sp2[3]
+}
+function computedCss(element) {
+    let matched = false
+    // 去除一份反转的stack
+    const elements = stack.slice().reverse()
+    // 元素上定义computedStyle对象存储元素style样式
+    if(!element.computedStyle) {
+        element.computedStyle = {}
+    }
+    for(let rule of rules) {
+        // /取出当前规则中的选择器文本， 用空格分割，反转让本身的选择器在第一位
+        const selectorParts = rule.selectors[0].split(' ').reverse()
+
+        // 先匹配元素的选择器和规则第一个， 也就是当前元素的标签是否相等， 不相等， 就不是当前元素的规则， 跳过，进行下一个对比
+        if(!match(element, selectorParts[0])){
+            continue
+        }
+        // 匹配规则
+        // selectorParts [#myid, div, body]
+        // elements [{div, body}]
+        // 直接从父级开始对比， 符合就对比下一个选择器
+        let j =1;
+        for(let i=0; i<elements.length; i++) {
+            if(match(elements[i], selectorParts[j])){
+                j++
+            }
+        }
+        // 如果j大于等于选择器的数量， 说明所有的标签名都命中了， 符合当前写的选择器， 此rule就是当前元素的
+        if(j >= selectorParts.length){
+            matched = true
+        }
+        if(matched){
+            //计算选择器权重,因为可能写多种选择器去覆盖
+            const sp = specificity(rule.selectors[0])
+            const computedStyle = element.computedStyle
+            for (let declaration of rule.declarations) {
+                // 每一行样式都需要用一个对象存储
+                if(!computedStyle[declaration.property]) {
+                    computedStyle[declaration.property] = {}
+                }
+                // 每一条样式都有权重， 用权重对比样式优先使用哪个
+                if(!computedStyle[declaration.property].specificity) {
+                    console.log(element.attributes, computedStyle, sp, 'sp')
+                    computedStyle[declaration.property] = declaration.value
+                    computedStyle[declaration.property].specificity = sp
+                } else if(compare(computedStyle[declaration.property].specificity, sp) < 0 ){
+                    // 若果计算出当前的rule权重大， 就需要覆盖原有的样式, 并覆盖权重
+                    computedStyle[declaration.property] = declaration.value
+                    computedStyle[declaration.property].specificity = sp
+                    console.log(element, 222)
+                }
+            }
+        }
+        console.log(element, 111)
+    }
+}
 module.exports.parseHtml = function(html){
     let state = data
     for( char of html) {
         state = state(char)
     }
-    return state = state(EOF)
+    state = state(EOF)
+    return stack[0]
 }
 function emit(token) {
     let top = stack[stack.length - 1]
     if(token.type == "startTag"){
         let element = {
-            tagName: curentToken.type,
+            tagName: token.tagName,
             children:[],
             attributes: []
         }
@@ -24,7 +136,9 @@ function emit(token) {
                 element.attributes.push({name: p, value: token[p]})
             }
         }
+        computedCss(element)
         top.children.push(element)
+        element.parent = top
         if(!token.isSelfClosing) {
             stack.push(element)
         }
@@ -33,6 +147,10 @@ function emit(token) {
         if(top.tagName != token.tagName) {
             throw new Error('doesn`t match')
         } else {
+            // style标签解析完， 有了css文本， 就开始解析
+            if(top.tagName === 'style') {
+                addCSSRules(top.children[0].content)
+            }
             stack.pop()
         }
         currentTextNode = null
@@ -87,7 +205,7 @@ function tagOpen(char) {
 // 结束标签
 function endTagOpen(char){
     if(char.match(/^[a-zA-Z]$/)) {
-        curentToken = {
+        currentToken = {
             type: 'endTag',
             tagName: ''
         }
@@ -136,9 +254,13 @@ function beforeAttributeName(char){
 // 解析属性名称
 function attributeName(char) {
     if(char.match(/^[\t\n\f ]$/) || char == '/' || char ==">" || char == EOF) {
-        currentAttribute.name += char
+        return afterAttributeName(char)
     } else if(char == '=') {
         return beforeAttibuteValue
+    }else if(char =='\u0000'){
+
+    } else if(char == "\'" || char =="'" || char ==">"){
+
     }else {
         currentAttribute.name += char
         return attributeName
@@ -217,9 +339,9 @@ function unquoteAttributeValue(char) {
         return data
     } else if(char =='\u0000') {
 
-    } else if(c === "\"" || c === "\'" || c === "="|| c === ">"|| c === "`"){
+    } else if(char === "\"" || char === "\'" || char === "="|| char === ">"|| char === "`"){
 
-    } else if(c === EOF){
+    } else if(char === EOF){
 
     } else {
         currentAttribute.value += char
@@ -247,7 +369,7 @@ function afterAttributeName(char) {
     }else if(char === '='){
         return beforeAttibuteValue
      } else if(char === '>'){
-        currentToken[currentAttribute.name] = currentAttribute[value]
+        currentToken[currentAttribute.name] = currentAttribute.value
         emit(currentToken)
         return data
     } else if(char === EOF) {
