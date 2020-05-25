@@ -1,4 +1,5 @@
 const css = require('css')
+let { layout } = require('../week07/layout.js')
 const EOF = Symbol('EOF')
 let curentToken = {}
 let currentAttribute = null
@@ -71,7 +72,6 @@ function computedCss(element) {
     for(let rule of rules) {
         // /取出当前规则中的选择器文本， 用空格分割，反转让本身的选择器在第一位
         const selectorParts = rule.selectors[0].split(' ').reverse()
-
         // 先匹配元素的选择器和规则第一个， 也就是当前元素的标签是否相等， 不相等， 就不是当前元素的规则， 跳过，进行下一个对比
         if(!match(element, selectorParts[0])){
             continue
@@ -101,23 +101,21 @@ function computedCss(element) {
                 }
                 // 每一条样式都有权重， 用权重对比样式优先使用哪个
                 if(!computedStyle[declaration.property].specificity) {
-                    console.log(element.attributes, computedStyle, sp, 'sp')
                     computedStyle[declaration.property] = declaration.value
                     computedStyle[declaration.property].specificity = sp
                 } else if(compare(computedStyle[declaration.property].specificity, sp) < 0 ){
                     // 若果计算出当前的rule权重大， 就需要覆盖原有的样式, 并覆盖权重
                     computedStyle[declaration.property] = declaration.value
                     computedStyle[declaration.property].specificity = sp
-                    console.log(element, 222)
                 }
             }
         }
-        console.log(element, 111)
     }
 }
 module.exports.parseHtml = function(html){
     let state = data
     for( char of html) {
+        const index = html.indexOf(char)
         state = state(char)
     }
     state = state(EOF)
@@ -127,6 +125,7 @@ function emit(token) {
     let top = stack[stack.length - 1]
     if(token.type == "startTag"){
         let element = {
+            type: 'element',
             tagName: token.tagName,
             children:[],
             attributes: []
@@ -137,6 +136,7 @@ function emit(token) {
             }
         }
         computedCss(element)
+        layout(element)
         top.children.push(element)
         element.parent = top
         if(!token.isSelfClosing) {
@@ -151,6 +151,8 @@ function emit(token) {
             if(top.tagName === 'style') {
                 addCSSRules(top.children[0].content)
             }
+            // 在元素在栈中去除前计算位置
+            layout(top)
             stack.pop()
         }
         currentTextNode = null
@@ -238,11 +240,12 @@ function tagName(char){
 // 解析属性名称前
 function beforeAttributeName(char){
     if(char.match(/^[\t\n\f ]$/)){
+        
         return beforeAttributeName
     } else if(char == '>' || char == '/' || char == EOF) {
         return afterAttributeName(char)
     } else if(char == '=') {
-        
+
     } else {
         currentAttribute = {
             name: '',
@@ -315,8 +318,8 @@ function afterQuotedAttributeValue(char) {
     } else if(char == '/') {
         return selfCloseTag
     } else if(char == '>') {
-        curentToken[currentAttribute.name] = currentAttribute.value
-        emit(curentToken)
+        currentToken[currentAttribute.name] = currentAttribute.value
+        emit(currentToken)
         return data
     } else if(char == EOF) {
 
