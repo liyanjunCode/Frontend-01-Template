@@ -9,34 +9,26 @@ const server = http.createServer((req, res) => {
     <html maaa="a" >
     <head>
     <style>
-        body .parent{
+        body {
+            width: 80px;
             display: flex;
+            background-color: rgba(255, 255, 255)
         }
-        .parent .item1{
-            width: 20px;
+        .item1 {
+            width: 50px;
+            height: 30px;
             background: yellow;
         }
-        .parent .item2{
-            width: 40px;
-            background: red;
-        }
-        .parent .item3{
-            width: 80px;
-            background: blue;
-        }
-        .parent .item4{
+        .item2 {
             flex:1;
+            height: 50px;
+            background: red;
         }
     </style>
     </head>
     <body>
-        <div class="parent">
-        29389
-            <div class="item1">1</div>
-            <div class="item2">2</div>
-            <div class="item3">3</div>
-            <div class="item4">4</div>
-        </div>
+        <div class="item1">1</div>
+        <div class="item2">2</div>
     </body>
     </html>`);
 })

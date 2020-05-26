@@ -136,7 +136,7 @@ function emit(token) {
             }
         }
         computedCss(element)
-        layout(element)
+        // layout(element)
         top.children.push(element)
         element.parent = top
         if(!token.isSelfClosing) {

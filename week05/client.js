@@ -1,5 +1,9 @@
 const net = require('net')
 const {parseHtml} = require('../week06/parse-html.js')
+console.log(999)
+var images = require("images");
+console.log(images, 1111)
+const render =  require('../week07/render.js')
 class Request {
     constructor(options) {
         this.host = options.host;
@@ -217,5 +221,8 @@ void async function(){
         }
     })
     const res = await request.send()
-    parseHtml(res.body)
+    let dom = parseHtml(res.body)
+    const viewPort = images(800, 600)
+    render(viewPort, dom)
+    viewPort.save("viewport.jpg")
 }()
