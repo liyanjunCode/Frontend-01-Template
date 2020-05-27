@@ -169,8 +169,8 @@ module.exports.layout = function(element){
             } else {
                 flexLine.push(item)
             }
-            if(itemStyle.crossSpace !== null || itemStyle.crossSpace !== (void 0)) {
-                itemStyle.crossSpace = Math.max(crossSpace, itemStyle.crossSpace)
+            if(itemStyle[crossSize] !== null || itemStyle[crossSize]!== (void 0)) {
+                crossSpace = Math.max(crossSpace, itemStyle[crossSize])
             }
             mainSpace = mainSpace - itemStyle[mainSize]
         }  

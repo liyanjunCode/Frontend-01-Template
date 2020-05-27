@@ -1,8 +1,6 @@
 const net = require('net')
 const {parseHtml} = require('../week06/parse-html.js')
-console.log(999)
 var images = require("images");
-console.log(images, 1111)
 const render =  require('../week07/render.js')
 class Request {
     constructor(options) {
