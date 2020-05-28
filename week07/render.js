@@ -7,13 +7,14 @@ function render(viewport, element) {
         if(element.style['background-color']) {
             let color = element.style['background-color'] || "rgba(0,0,0)";
             color.match(/rgb\((\d+),(\d+),(\d+)\)/)
-            img.file(Number(RegExp.$1), Number(RegExp.$2), Number(RegExp.$3))
+            console.log(img)
+            img.fill(Number(RegExp.$1), Number(RegExp.$2), Number(RegExp.$3), 1)
             viewport.draw(img, element.style.left||0, element.style.top||0 )
-        }
-        if(element.children) {
-            for(let child of element.children) {
-                render(viewport, child)
-            }
+        } 
+    }
+    if(element.children) {
+        for(let child of element.children) {
+            render(viewport, child)
         }
     }
 }
