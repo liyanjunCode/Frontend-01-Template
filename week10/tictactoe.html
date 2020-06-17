@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        #wrap {
+            width: 156px;
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .item {
+            width: 50px;
+            height: 50px;
+            border: 1px solid black;
+            background: green;
+            text-align: center;
+            line-height: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div id="wrap">
+
+
+    </div>
+    <script>
+        const wrap = document.querySelector('#wrap');
+
+        let partten = [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
+        ]
+        let color = 1
+        
+        function show(partten){
+            wrap.innerHTML = '';
+            for(let i=0; i<3; i++) {
+                for(let j=0; j<3; j++){
+                    const item = document.createElement('div');
+                    item.classList.add('item')
+                    wrap.appendChild(item);
+                    item.innerText = partten[i][j] == 1 ? 'X' : partten[i][j] == 2 ? 'O' : '';
+                    item.addEventListener('click', function(){
+                        move(j, i)
+                    }, false)
+                }
+            }
+        }
+        function move(x, y){
+            if(partten[y][x]){return}
+            color = 3 - color
+            partten[y][x] = color;
+            if(check(partten, color)){alert(`${color == 1 ? 'X' : 'O'}胜利`)}
+            show(partten)
+        }
+        // 判断是否赢了
+        function check(partten, color){ 
+            // 横向
+            for(let i=0; i<3; i++) {
+                let win = true;
+                for(let j=0; j<3; j++){
+                    if(partten[i][j] != color){
+                        win = false
+                        break;
+                    }
+                }
+                if(win) {
+                    return true
+                }
+            }
+            // /纵向
+            for(let i=0; i<3; i++) {
+                let win = true;
+                for(let j=0; j<3; j++){
+                    if(partten[j][i] != color){
+                        win = false
+                        break;
+                    }
+                }
+                if(win) {
+                    return true
+                }
+                
+            }
+            // 左斜线
+            {
+                let win = true;
+                for(let i=0; i<3; i++) {
+                    for(let j=0; j<3; j++){
+                        if(partten[i][i] != color) {
+                            win = false
+                            break;
+                        }
+                    }
+                } 
+                if(win) {
+                    return true
+                }
+            }
+            // 右斜线
+            {
+                let win = true;
+                for(let i=0; i<3; i++) {
+                    for(let j=0; j<3; j++){
+                        if(partten[i][2-i] != color) {
+                            win = false
+                            break;
+                        }
+                    }
+                } 
+                if(win) {
+                    return true
+                }
+            }
+            return false;
+        }
+        function willWin(partten, color){
+            
+        }
+        show(partten)
+    </script>
+</body>
+</html>
