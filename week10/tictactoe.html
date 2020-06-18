@@ -49,13 +49,7 @@
                 }
             }
         }
-        function move(x, y){
-            if(partten[y][x]){return}
-            color = 3 - color
-            partten[y][x] = color;
-            if(check(partten, color)){alert(`${color == 1 ? 'X' : 'O'}胜利`)}
-            show(partten)
-        }
+
         // 判断是否赢了
         function check(partten, color){ 
             // 横向
@@ -117,7 +111,84 @@
             }
             return false;
         }
+        // 判断是否将要赢
         function willWin(partten, color){
+            outer: for(let i=0; i<3; i++) {
+                for(let j=0; j<3; j++){
+                    if(partten[i][j]){ continue }
+                    let tmp = clone(partten);
+                    tmp[i][j] = color;
+                    if(check(tmp, color)) {
+                        console.log(`${color == 1 ? 'X' : 'O'}将要胜利`)
+                        return [j, i]
+                    }
+                }
+            }
+        }
+        // 复制数据结构
+        function clone(partten){
+            return JSON.parse(JSON.stringify(partten))
+        }
+        // 用户下的
+        function move(x, y){
+            if(partten[y][x]){return}
+            partten[y][x] = color;
+            if(check(partten, color)){
+                alert(`${color == 1 ? 'X' : 'O'}胜利`)
+                partten = [
+                    [0, 0, 0],
+                    [0, 0, 0],
+                    [0, 0, 0]
+                ]
+            }
+            color = 3 - color
+            show(partten)
+            willWin(partten, color)
+        }
+        function computerMove(){
+            const ret = bestChoice(partten, color)
+            partten[ret.point[1]][ret.point[0]] = color
+            if(check(partten, color)){
+                alert(`${color == 1 ? 'X' : 'O'}胜利`)
+                partten = [
+                    [0, 0, 0],
+                    [0, 0, 0],
+                    [0, 0, 0]
+                ]
+            }
+            color = 3 - color;
+            show(partten)
+        }
+        function bestChoice(partten, color){
+            let point=null;
+            if(point = willWin(partten, color)){
+                return {
+                    point, 
+                    result: 1
+                }
+            }
+            let result = -1;
+            outer: for(let i=0; i< 3; i++){
+                for(let j=0; j< 3; j++){
+                    if(partten[i][j]){ continue}
+                    let tmp = clone(partten)
+                    tmp[i][j] = color;
+                    // 获取到对手赢得位置
+                    const ret = bestChoice(tmp, 3 - color)
+                    // 这里只需要找到一次对手胜利即可， 就是最有利于我的
+                    if(- ret.result >= result){
+                        point = [j, i];
+                        result = - ret.result
+                    }
+                    if(result == 1) {
+                        break outer;
+                    }
+                }
+            }
+            return {
+                point,
+                result: point ? result : 0
+            }
             
         }
         show(partten)
