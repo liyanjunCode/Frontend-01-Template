@@ -67,53 +67,152 @@
             localStorage.setItem('map', JSON.stringify(partten))
         }, false)
         document.addEventListener('contextmenu', e => e.preventDefault())
-        // 
+        // 简单存储数据结构
+        class Sorted {
+            constructor(data, compare) {
+                this.data = data;
+                this.compare =compare || ((a, b) => a - b);
+            }
+            take(){
+                if(!this.data.length){return}
+                let min = this.data[0];
+                let minIndex = 0;
+                for(let i=0; i<this.data.length; i++){
+                    if(this.compare(this.data[i], min) < 0){
+                        min = this.data[i];
+                        minIndex = i;
+                    }
+                }
+                this.data[minIndex] = this.data[this.data.length - 1];
+                this.data.pop();
+                return min;
+            }
+            insert(v){
+                this.data.push(v)
+            }
+            get length(){
+                return this.data.length;
+            }
+        }
+        // 二叉堆数据结构
+        class BinaryHeap {
+            constructor(data, compare){
+                this.data = data;
+                this.compare =compare || ((a, b) => a - b);
+            }
+            // 二叉堆顶端元素最大
+            take(){
+                if(!this.data.length){return}
+                let min = this.data[0];
+                let i = 0;
+                while(i < this.data.length) {
+                    // 临界值处理
+                    // 如果2 * i + 1比length大， 不用处理了， 两个肯定都超过i了
+                    if(2 * i + 1 >= this.data.length) {
+                        break;
+                    }
+                    // 如果2 * i + 2比length大， 说明2 * i + 1小于length， 2 * i + 1应该是最小值
+                    // 这个是i下面的2个值， 所以肯定比i小
+                    if(2 * i + 2 >= this.data.length) {
+                        min = this.data[2 * i + 1];
+                        i = 2 * i + 1;
+                        break;
+                    }
+                    // 比较二叉堆分叉的两个子元素的大小， 取最小值
+                    if(this.compare(this.data[2 * i + 1], this.data[2 * i + 2]) < 0) {
+                        min = this.data[2 * i + 1];
+                        i = 2 * i + 1;
+                    } else {
+                        min = this.data[2 * i + 2];
+                        i = 2 * i + 2;
+                    }
+                }
+                // 最后一个是最小值了， 删掉返回出去了
+                if(i < this.data.length - 1) {
+                    // 如果i比整个数组的长度小
+                    this.insertAt(i, this.data.pop())
+                } else {
+                    this.data.pop();
+                }
+                
+                return min
+            }
+            insertAt(i, v){
+                this.data[i] = v;
+                while(i>0 && this.compare(v, this.data[Math.floor((i-1)/2)]) > 0) {
+                    this.data[i] = this.data[Math.floor((i-1)/2)];
+                    this.data[Math.floor((i-1)/2)] = v;
+                    i = Math.floor((i-1)/2);
+                }
+            }
+            insert (v) {
+                this.insertAt(this.data.length, v);
+            }
+            get length(){
+                return this.data.length;
+            }
+        }
         async function path(partten, start, end) {
             // 因为是广度优先搜索， 所以要用队列的数据结构， 深度优先搜索，就是用栈的数据结构
-            let stack = [start];
+            let table = Object.create(partten);
+            let queue = new Sorted([start], (a, b) => dis(a) - dis(b));
+            // let queue = new BinaryHeap([start], (a, b) => dis(a) - dis(b));
+            
             // 标识开始结束位置
             container.children[start[0] * 100 + start[1]].style.background = 'red'
             container.children[end[0] * 100 + end[1]].style.background = 'red'
-            while(true) {
+             // 启发式： 
+            function dis(point) {
+                return (point[0] - end[0]) ** 2 + (point[1] - end[1]) ** 2;
+            }
+            // 将符合条件的点插入数据结构中
+            async function insert(x, y, prev){
+                if(x<0 || y<0 || x>100 || y>100){return};
+                if(table[x * 100 + y]){return}
+                await sleep(1);
+                table[x * 100 + y] = prev;
+                container.children[x * 100 + y].style.background = 'pink'
+                // stack.push([x, y]);
+                queue.insert([x, y])
+            }
+            while(queue.length) {
                 // 从队列中获取第一个开始位置
-                let [ x, y ] = stack.shift();
+                let [ x, y ] = queue.take();
                 // 搜索结束判断
                 if(x == end[0] && y == end[1]) {
-                    return
+                    const collect = [];
+                    while(x !== start[0] || y !== start[1]) {
+                        collect.push(table[x * 100 + y]);
+                        [x, y] = table[x * 100 + y];
+                        container.children[x * 100 + y].style.background = 'yellow';
+                    }
+                    return collect; 
                 }
                 // 左右两个紧邻方向元素
                 if(partten[(x-1) * 100 + y] === 0)
-                    await insert(stack, x-1, y, [x, y]);
+                    await insert(x-1, y, [x, y]);
                 if(partten[(x + 1) * 100 + y]  === 0)
-                    await insert(stack, x+1, y, [x, y]);
+                    await insert(x+1, y, [x, y]);
 
                 // 上下两个紧邻方向
                 if(partten[x * 100 + y - 1] === 0)
-                    await insert(stack, x, y - 1, [x, y]);
+                    await insert(x, y - 1, [x, y]);
                 if(partten[x * 100 + y + 1] === 0)
-                    await insert(stack, x, y + 1, [x, y]);
+                    await insert(x, y + 1, [x, y]);
 
                 // 对角线紧邻方向
                 if(partten[(x-1) * 100 + y - 1] === 0 && (partten[(x-1) * 100 + y] === 0 || partten[x * 100 + y - 1] === 0))
-                    await insert(stack, x - 1, y - 1, [x, y]);
+                    await insert( x - 1, y - 1, [x, y]);
 
                 if(partten[(x-1) * 100 + y + 1] === 0 && (partten[(x-1) * 100 + y] === 0 || partten[x * 100 + y + 1] === 0))
-                    await insert(stack, x - 1, y + 1, [x, y]);
+                    await insert(x - 1, y + 1, [x, y]);
 
                 if(partten[(x+1) * 100 + y - 1] === 0 && (partten[(x+1) * 100 + y] === 0 || partten[x * 100 + y - 1] === 0))
-                    await insert(stack, x + 1, y - 1, [x, y]);
+                    await insert(x + 1, y - 1, [x, y]);
                 if(partten[(x+1) * 100 + y + 1] === 0 && (partten[(x+1) * 100 + y] === 0 || partten[x * 100 + y + 1] === 0))
-                    await insert(stack, x + 1, y + 1, [x, y]);
+                    await insert(x + 1, y + 1, [x, y]);
             }
-            
-        }
-        // 将符合条件的点插入数据结构中
-        async function insert(stack, x, y, prev){
-            if(x<0 || y<0 || x>100 || y>100){return}
-            stack.push([x, y]);
-            await sleep(1);
-            partten[x * 100 + y] = 2;
-            container.children[x * 100 + y].style.background = 'pink'
+            return null
         }
         function sleep(t){
             return new Promise((resolve, reject) => {
