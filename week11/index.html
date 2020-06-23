@@ -114,16 +114,16 @@
                     // 如果2 * i + 2比length大， 说明2 * i + 1小于length， 2 * i + 1应该是最小值
                     // 这个是i下面的2个值， 所以肯定比i小
                     if(2 * i + 2 >= this.data.length) {
-                        min = this.data[2 * i + 1];
+                        this.data[i] = this.data[2 * i + 1];
                         i = 2 * i + 1;
                         break;
                     }
                     // 比较二叉堆分叉的两个子元素的大小， 取最小值
                     if(this.compare(this.data[2 * i + 1], this.data[2 * i + 2]) < 0) {
-                        min = this.data[2 * i + 1];
+                        this.data[i] = this.data[2 * i + 1];
                         i = 2 * i + 1;
                     } else {
-                        min = this.data[2 * i + 2];
+                        this.data[i] = this.data[2 * i + 2];
                         i = 2 * i + 2;
                     }
                 }
@@ -139,7 +139,7 @@
             }
             insertAt(i, v){
                 this.data[i] = v;
-                while(i>0 && this.compare(v, this.data[Math.floor((i-1)/2)]) > 0) {
+                while(i>0 && this.compare(v, this.data[Math.floor((i-1)/2)]) < 0) {
                     this.data[i] = this.data[Math.floor((i-1)/2)];
                     this.data[Math.floor((i-1)/2)] = v;
                     i = Math.floor((i-1)/2);
@@ -152,11 +152,19 @@
                 return this.data.length;
             }
         }
+        let a = new BinaryHeap([], (a, b) => a-b);
+        a.insert(9)
+        a.insert(7)
+        a.insert(5)
+        a.insert(2)
+        a.insert(0)
+        a.insert(3)
+        console.log(a.data)
         async function path(partten, start, end) {
             // 因为是广度优先搜索， 所以要用队列的数据结构， 深度优先搜索，就是用栈的数据结构
             let table = Object.create(partten);
-            let queue = new Sorted([start], (a, b) => dis(a) - dis(b));
-            // let queue = new BinaryHeap([start], (a, b) => dis(a) - dis(b));
+            // let queue = new Sorted([start], (a, b) => dis(a) - dis(b));
+            let queue = new BinaryHeap([start], (a, b) => dis(a) - dis(b));
             
             // 标识开始结束位置
             container.children[start[0] * 100 + start[1]].style.background = 'red'
