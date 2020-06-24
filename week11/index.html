@@ -100,11 +100,12 @@
                 this.data = data;
                 this.compare =compare || ((a, b) => a - b);
             }
-            // 二叉堆顶端元素最大
+            // 二叉堆顶端元素最小
             take(){
                 if(!this.data.length){return}
                 let min = this.data[0];
                 let i = 0;
+                // 拿走了顶部最小元素， 需修复二叉堆数据结构
                 while(i < this.data.length) {
                     // 临界值处理
                     // 如果2 * i + 1比length大， 不用处理了， 两个肯定都超过i了
@@ -152,14 +153,6 @@
                 return this.data.length;
             }
         }
-        let a = new BinaryHeap([], (a, b) => a-b);
-        a.insert(9)
-        a.insert(7)
-        a.insert(5)
-        a.insert(2)
-        a.insert(0)
-        a.insert(3)
-        console.log(a.data)
         async function path(partten, start, end) {
             // 因为是广度优先搜索， 所以要用队列的数据结构， 深度优先搜索，就是用栈的数据结构
             let table = Object.create(partten);
