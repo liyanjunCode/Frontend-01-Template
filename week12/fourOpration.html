@@ -1,0 +1,106 @@
+<script>
+    const reg = /([0-9\.]+)|([ \t\r\n]+)|([\r\n]+)|(\+)|(\-)|(\*)|(\/)/g
+    let dictionary = ['Number', "Whitespace", "LineTerminator", "+", "-", "*", "/"];
+    let result;
+    
+    function* tokenize(str) {
+        do{
+            result = reg.exec(str);
+            if(!result){break;}
+            const token = {
+                type: null,
+                value: null
+            }
+            for(let i=0; i< dictionary.length; i++) {
+                if(result[i+1]) {
+                    token.type = dictionary[i];
+                    token.value = result[i+1];
+                }
+            }
+            yield token;
+        } while(result)
+
+        yield {
+            type: "EOF"
+        };
+    }
+    function Expression(source) {
+        if(source[0].type === 'AdditiveExpression' && source[1] && source[1].type == 'EOF') {
+            const item = {
+                type: 'Expression',
+                children: [source.shift(), source.shift()]
+            }
+            source.unshift(item)
+            return item
+        }
+        AdditiveExpression(source);
+        return Expression(source)
+    }
+    // 加减法
+    function AdditiveExpression(source) {
+        if(source[0].type == 'MultiplicativeExpression') {
+            const item = {
+                type: 'AdditiveExpression',
+                children: [source[0]]
+            }
+            source[0] = item;
+            return AdditiveExpression(source);
+        }
+        if(source[0].type == 'AdditiveExpression' && 
+        source[1] && (source[1].type === '+' || source[1].type === '-')) {
+            const item = {
+                type: 'AdditiveExpression',
+                operate: source[1],
+                children: []
+            }
+            item.children.push(source.shift());
+            item.children.push(source.shift());
+            MultiplicativeExpression(source);
+            item.children.push(source.shift());
+            source.unshift(item);
+            return AdditiveExpression(source);
+        }
+        if(source[0].type == 'AdditiveExpression') {
+            return source[0];
+        }
+        MultiplicativeExpression(source);
+        return AdditiveExpression(source);
+    }
+    // 乘除法
+    function MultiplicativeExpression(source){
+        if(source[0].type === 'Number') {
+            const item = {
+                type: 'MultiplicativeExpression',
+                children: [source[0]]
+            }
+            source[0] = item;
+            return MultiplicativeExpression(source);
+        }
+        if(source[0].type === 'MultiplicativeExpression' && 
+        source[1] && (source[1].type == '*' || source[1].type == '/')) {
+            const item = {
+                type: 'MultiplicativeExpression',
+                operate: source[1],
+                children: []
+            }
+            item.children.push(source.shift())
+            item.children.push(source.shift())
+            item.children.push(source.shift())
+            source.unshift(item);
+            return MultiplicativeExpression(source);
+        }
+        // 走到这MultiplicativeExpression处理完了
+        if(source[0].type === 'MultiplicativeExpression'){
+            return source[0]
+        }
+        return MultiplicativeExpression(source);
+    }
+    const source = [];
+    for (let item of tokenize('1 * 5 + 2 - 1 / 1')){
+        if(item.type !== "Whitespace" && item.type !== "LineTerminator") {
+            source.push(item)
+        } 
+    }
+    console.log(Expression(source))
+
+</script>

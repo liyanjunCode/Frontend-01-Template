@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .active {
+            color: red;
+        }
+        span {
+            display: inline-block;
+            width: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div class="str-container"></div>
+        <div class="part-container"></div>
+    </div>
+    <script>
+        // kmp算法， 复杂度O(m+n)
+        const container = document.querySelector("#container");
+        const strContainer = document.querySelector(".str-container");
+        const partContainer = document.querySelector(".part-container");
+        // let moveIdx = 0;
+        // 用于异步渲染延迟
+        function asyncVisible(t){
+            return new Promise((resolve) => {
+                setTimeout(resolve, t)
+            })
+        }
+        function createStr(str, pos){
+            strContainer.innerHTML = ''
+            for(let i=0; i< str.length; i++){
+                const div = document.createElement('span');
+                div.innerHTML = str[i];
+                strContainer.append(div);
+                if(i == pos){
+                    div.classList.add('active');
+                } 
+            }
+        }
+        function createPart(partten, pos, moveIdx){
+            partContainer.innerHTML = ''
+            for(let i=0; i < moveIdx; i++){
+                const div = document.createElement('span');
+                partContainer.append(div);
+            }
+            for(let i=0; i< partten.length; i++){
+                const div = document.createElement('span');
+                div.innerHTML = partten[i];
+                partContainer.append(div);
+                if(i == pos){
+                    div.classList.add('active');
+                } 
+            }
+        }
+        async function render(str, partten, p1, p2, moveIdx) {
+            await asyncVisible(500);
+            createStr(str, p1);
+            createPart(partten, p2, moveIdx, moveIdx);
+        }
+        async function find(str, partten) {
+            // 用于判断partten字符串该返回到哪个匹配位置
+            let table = new Array(partten.length).fill(0);
+            let moveIdx = 0;
+            // k用于记录partten中有几个相同公共的字符
+            let k=0;
+            for(let j=1; j<partten.length; j++) {
+                if(partten[k] == partten[j]) {
+                    // 相等， 说明有公共字符，改变k记录有几个公共字符
+                    k++;
+                } else {
+                    // 如果匹配到了不相等， 让k重置为0
+                    k=0;
+                }
+                // 记录在partten的j的位置有几个相同子串
+                // 记录的是当前位置已遍历的字符串前后对称的相同公共字符
+                table[j] = k;
+            }
+            // 循环要查找的字符串
+            // j用于记录比对到了partten哪个位置
+            let j=0;
+            for(let i=0; i<str.length; i++){
+                if(str[i] == partten[j]) {
+                    // 可视化渲染
+                    if(j == partten.length - 1){
+                        break;
+                    }
+                    await render(str, partten, i, j, moveIdx);
+                    j++;
+                } else {
+                    
+                    // 当前字母未匹配到， 需要查看上一个字符是的公共字符数
+                    j = j> 0 ? table[j-1] : 0;
+                   
+                    if(str[i] == partten[j]) {
+                        j++;
+                    }
+                    moveIdx = i - j + 1;
+                    // 可视化渲染
+                    
+                    await render(str, partten, i, j-1, moveIdx);
+                }
+            }
+            if(j == partten.length-1) {
+                await render(str, partten, moveIdx + j, j, moveIdx);
+                alert('true')
+                return true;
+            }
+            alert('false')
+            return false;
+        }
+
+        const str = 'abcabcabcabxabc';
+        const p = 'abxabc';
+
+        find(str, p)
+    </script>
+</body>
+</html>
