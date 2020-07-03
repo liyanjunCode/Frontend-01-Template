@@ -1,0 +1,50 @@
+<script>
+// 字典树， 从一堆字符串中查找次数最多的字符串, 字典树是多叉树
+class Trie {
+    constructor(){
+        this.root = Object.create(null);
+    }
+    insert(str){
+        let node = this.root;
+        for(let c of str) {
+            if(!node[c]) {
+                node[c] = Object.create(null);
+            }
+            node = node[c];
+        }
+        if(!('$' in node)) {
+            node.$ = 0
+        }
+        node.$++;       
+    }
+    most(){
+        let max = 0;
+        let maxWord = null;
+        let visited = (node, text) => {
+            for (let p in node) {
+                // 但查询到$时， 当前字符串已经查询完，获取次数，比较大小
+                if(node.$ && node.$ > max) {
+                    max = node.$;
+                    maxWord = text;
+                }
+                // 对每一个分支，进行递归
+                visited(node[p], text + p);
+            }
+        }
+        visited(this.root, '');
+        console.log(maxWord);
+    }
+}
+
+const trie = new Trie();
+function randomStr(len){
+    let s = '';
+    for(let i=0; i<len; i++){
+        s += String.fromCharCode(Math.random() * 26 + 'a'.charCodeAt(0));
+    }
+    return s;
+}
+for (let i=0; i<10000; i++){
+    trie.insert(randomStr(4));
+}
+</script>
